@@ -1,32 +1,44 @@
-from fastapi import FastAPI, Request
+```python
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-app=FastAPI()
 
-lst = []  # todo list
+app = FastAPI()
 
-class X(BaseModel):  # what even is X?
-    a:str
-    b:str # these are actually title and description
+todos = []
 
-@app.post("/add")
-def A(x:X):
- lst.append(x) # still storing model, not dict
- return {"m":"ok"}
+class Todo(BaseModel):
+    title: str
+    description: str
 
-@app.get("/g/{i}")
-def B(i:int):
-  return lst[i] # no error checking, bad naming, inconsistent indent
+@app.post("/todos")
+def create_todo(todo: Todo):
+    todos.append(todo)
+    return {"message": "Todo created successfully", "todo": todo}
 
-@app.delete("/d/{i}")
-def C(i): # forgot to type this on purpose
-  del lst[i]
-  return "bye" # no JSON return, no consistent response format
+@app.get("/todos/{todo_id}")
+def read_todo(todo_id: int):
+    try:
+        return todos[todo_id]
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Todo not found")
 
-@app.get("/l")
-def listThings():  # camelCase? okay sure
-  # TODO: maybe return things?
-  return lst # still returning raw Pydantic models
+@app.put("/todos/{todo_id}")
+def update_todo(todo_id: int, todo: Todo):
+    try:
+        todos[todo_id] = todo
+        return {"message": "Todo updated successfully", "todo": todo}
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Todo not found")
 
-# Dead code below, totally unrelated, just left here for no reason
-def never_used():
-    pass
+@app.delete("/todos/{todo_id}")
+def delete_todo(todo_id: int):
+    try:
+        del todos[todo_id]
+        return {"message": "Todo deleted successfully"}
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+@app.get("/todos")
+def list_todos():
+    return todos
+```
